@@ -30,8 +30,6 @@ if(~isdeployed)
     addpath(genpath(folder));
 end
 
-a = Constants.HANN_WINDOW_SIZE;
-
 %--------------------------------------------------------------------------
 % Example 1
 %--------------------------------------------------------------------------
@@ -46,5 +44,7 @@ airpar.channel = 1;
 airpar.head = 1;
 airpar.rir_no = 4;
 [h_air,air_info] = LoadAIR.loadAIR(airpar, Constants.AIR_LIBRARY_PATH);
+
+earlyIR = AugmentationService.augmentRIR(h_air,air_info);
 
 
