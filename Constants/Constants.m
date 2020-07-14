@@ -8,7 +8,7 @@ classdef Constants
         % #################### DRR CONSTANTS ####################
 
         % defines the intensity of the impulse response which will represent when the audio reached the microfone in the recording
-        DELAY_THRESHOLD = 0.0001;
+        DELAY_THRESHOLD = 0.001;
 
         % [miliseconds] defines the size of the tolerance window that will be used to retrieve the early/late impulse responses
         TOLERANCE_WINDOW = 2.5;
