@@ -48,6 +48,7 @@ airpar.rir_no = 4;
 [h_air,air_info] = LoadAIR.loadAIR(airpar, Constants.AIR_LIBRARY_PATH);
 
 targetDRR = 5;
+targetT60 = 0.2;
 
 [augmentedEarlyRIR, augmentedRIR] = DRRAugmentationService.generateAugmentedRIR(h_air,air_info, targetDRR);
 

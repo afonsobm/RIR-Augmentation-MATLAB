@@ -26,11 +26,21 @@ classdef T60AugmentationService
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % Calculating required decay rates
-            [decayRateSubBands, targetDecayRateSubBands] = calculateDecayRates(t60FullBand, t60SubBands, targetT60, fs);
+            [decayRateSubBands, targetDecayRateSubBands] = T60AugmentationService.calculateDecayRates(t60FullBand, t60SubBands, targetT60, air_info.fs);
+
+            % Retrieving late-field onset time
+            % TODO: Verify if this way to get this parameter is acceptable
+            lateOnsetTime = IRUtil.getDelaySizeFromRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD) ...
+                            + IRUtil.getWindowSize(air_info.fs, Constants.TOLERANCE_WINDOW);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % Generating augmented RIR
-            
+            [augmentedLateRIR, augmentedRIR] = T60AugmentationService.augmentLateIR(raFilteredSignals, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime);
+        end
 
+        function [augmentedLateRIR, augmentedRIR] = augmentLateIR(rirSubBands, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime)
+
+            %f = @(t) exp((-t + lateOnsetTime) * ())
         end
 
         function [decayRateSubBands, targetDecayRateSubBands] = calculateDecayRates(t60FullBand, t60SubBands, targetT60, fs)

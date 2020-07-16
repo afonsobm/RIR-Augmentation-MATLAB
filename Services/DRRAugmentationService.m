@@ -7,7 +7,7 @@ classdef DRRAugmentationService
             lateIR = IRUtil.lateResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);
 
             % Calculating Alpha Scalar to DRR
-            drrAlpha = AugmentationService.calculateAlpha(targetDRR, air_info.fs, earlyIR, lateIR);
+            drrAlpha = DRRAugmentationService.calculateAlpha(targetDRR, air_info.fs, earlyIR, lateIR);
 
             % Generating Augmented RIR
             augmentedEarlyRIR = earlyIR * drrAlpha;
