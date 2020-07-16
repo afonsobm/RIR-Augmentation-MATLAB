@@ -23,6 +23,8 @@
 %   Direct-to-Reverberant Ratio (DRR) and Reverberation Time (T60) parameters extracted from the RIR
 %   Later, these can be aplied to speech signals to generate far-field speechs (using augmented RIR and artificial noises)
 
+clear;
+clc;
 % Changing PWD to the main file and adding all subfolders to PATH
 if(~isdeployed)
     folder = fileparts(which(mfilename));
@@ -45,6 +47,8 @@ airpar.head = 1;
 airpar.rir_no = 4;
 [h_air,air_info] = LoadAIR.loadAIR(airpar, Constants.AIR_LIBRARY_PATH);
 
-earlyIR = AugmentationService.augmentRIR(h_air,air_info);
+targetDRR = 5;
+
+[augmentedEarlyRIR, augmentedRIR] = DRRAugmentationService.generateAugmentedRIR(h_air,air_info, targetDRR);
 
 

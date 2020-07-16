@@ -7,8 +7,8 @@ classdef IRUtil
             delaySize = find(abs(earlyResponseData) > threshold);
             delaySize = delaySize(1);
             
-            earlyResponseData(1:(delaySize - sampleWindowSize)) = 0;
-            earlyResponseData((delaySize + sampleWindowSize):end) = 0;
+            earlyResponseData(1 : (delaySize - sampleWindowSize) - 1) = 0;
+            earlyResponseData((delaySize + sampleWindowSize) + 1 : end) = 0;
             
             earlyIR = earlyResponseData;
         end

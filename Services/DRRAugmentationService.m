@@ -1,18 +1,18 @@
-classdef AugmentationService
+classdef DRRAugmentationService
     methods(Static)
-        function augmentedRIR = augmentRIR(h_air, air_info)
+        function [augmentedEarlyRIR, augmentedRIR] = generateAugmentedRIR(h_air, air_info, targetDRR)
 
             % Retrieving early/late responses
             earlyIR = IRUtil.earlyResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);
             lateIR = IRUtil.lateResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);
 
-            % Calculating DRR
-            drr = AugmentationService.calculateDRR(earlyIR, lateIR);
-
             % Calculating Alpha Scalar to DRR
-            drrAlpha = AugmentationService.calculateAlpha(drr, air_info.fs, earlyIR, lateIR);
+            drrAlpha = AugmentationService.calculateAlpha(targetDRR, air_info.fs, earlyIR, lateIR);
 
-            augmentedRIR = 'dummy';
+            % Generating Augmented RIR
+            augmentedEarlyRIR = earlyIR * drrAlpha;
+            h_air(abs(augmentedEarlyRIR) > 0) = h_air(abs(augmentedEarlyRIR) > 0) * drrAlpha;
+            augmentedRIR = h_air;
         end
 
         function drrAlpha = calculateAlpha(drr, fs, earlyIR, lateIR)
@@ -46,5 +46,6 @@ classdef AugmentationService
         function drr = calculateDRR(earlyIR, lateIR)
             drr = 10 * log10(sum(earlyIR.^2)/sum(lateIR.^2));
         end
+
     end
 end
