@@ -6,6 +6,12 @@ classdef T60AugmentationService
         % Visit this website for more information: "http://www.ita-toolbox.org/"
         function [augmentedLateRIR, augmentedRIR] = generateAugmentedRIR(h_air, air_info, targetT60)
             
+            % Transpose RIR if lines == 1
+            szRIR = size(h_air);
+            if szRIR(1) == 1 
+                h_air = h_air.';
+            end
+
             % Loading the RIR into the itaAudio format
             itaRIR = itaAudio(h_air, air_info.fs, 'time');
 
@@ -30,26 +36,43 @@ classdef T60AugmentationService
 
             % Retrieving late-field onset time
             % TODO: Verify if this way to get this parameter is acceptable
-            lateOnsetTime = IRUtil.getDelaySizeFromRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD) ...
+            lateOnsetTime = IRUtil.getDelaySizeFromRIR(h_air, Constants.DELAY_THRESHOLD) ...
                             + IRUtil.getWindowSize(air_info.fs, Constants.TOLERANCE_WINDOW);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % Generating augmented RIR
-            [augmentedLateRIR, augmentedRIR] = T60AugmentationService.augmentLateIR(raFilteredSignals, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime);
+            [augmentedLateRIR, augmentedRIR] = T60AugmentationService.augmentLateIR(raFilteredSignals.time, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime);
         end
 
         function [augmentedLateRIR, augmentedRIR] = augmentLateIR(rirSubBands, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime)
 
-            %f = @(t) exp((-t + lateOnsetTime) * ())
+            szRIR = size(rirSubBands);
+            if (szRIR(2) > szRIR(1))
+                rirSubBands = rirSubBands.';
+            end
+
+            augmentedRIR = zeros(size(rirSubBands(:,1)));
+
+            for i = 1:1:length(decayRateSubBands)
+                if (decayRateSubBands(i) ~= 0)
+
+                    t = (1:1:length(rirSubBands(:,i))).';
+                    expAug = exp((-t + lateOnsetTime) * ((decayRateSubBands(i) - targetDecayRateSubBands(i))/(decayRateSubBands(i) * targetDecayRateSubBands(i))));
+                    augmentedRIR = augmentedRIR + (rirSubBands(:,i) .* expAug);
+                end
+            end
+
+            augmentedLateRIR = augmentedRIR;
+            augmentedLateRIR(1:lateOnsetTime) = 0;
         end
 
         function [decayRateSubBands, targetDecayRateSubBands] = calculateDecayRates(t60FullBand, t60SubBands, targetT60, fs)
 
             % Calculating estimated decay rates for each subband
-            decayRateSubBands = convertT60ToDecayRate(t60SubBands, fs);
+            decayRateSubBands = T60AugmentationService.convertT60ToDecayRate(t60SubBands, fs);
 
             % Calculating desired decay rates for each subband
-            drGamma = convertT60ToDecayRate(targetT60, fs) / convertT60ToDecayRate(t60FullBand, fs);
+            drGamma = T60AugmentationService.convertT60ToDecayRate(targetT60, fs) / T60AugmentationService.convertT60ToDecayRate(t60FullBand, fs);
             targetDecayRateSubBands = drGamma * decayRateSubBands;
         end
         

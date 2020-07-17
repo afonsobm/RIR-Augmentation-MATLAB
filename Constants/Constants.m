@@ -3,7 +3,7 @@ classdef Constants
 
         % #################### GENERAL CONSTANTS ####################
 
-        AIR_LIBRARY_PATH = '../AIR_LIB/';
+        AIR_LIBRARY_PATH = '../DATABASES/AIR_LIB/';
 
         % #################### DRR CONSTANTS ####################
 
