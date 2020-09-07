@@ -50,19 +50,39 @@ airpar.rir_no = 4;
 targetDRR = 5;
 targetT60 = 0.5;
 
-%[augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
+[augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
 [augmentedLateRIR, augmentedRIR_T60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
 
-plot(h_air);
-figure();
-plot(augmentedRIR_T60);
+%--------------------------------------------------------------------------
+% Loading speech "male_src_1" + noise "0030"
+%--------------------------------------------------------------------------
+
+speech_sp.name = 'male_src_1';
+noise_sp.name = 'noise-free-sound-0030';
+tfs = 48e3;
+
+speech_sp.data = AudioUtil.loadAudio(speech_sp.name, Constants.SPEECH_LIBRARY_PATH, tfs);
+noise_sp.data = AudioUtil.loadAudio(noise_sp.name, Constants.NOISE_LIBRARY_PATH, tfs);
+
+SpeechGeneratorService.generateAugmentedSpeech(1,1,1);
+
+% plot(h_air);
+% figure();
+% plot(augmentedRIR_T60);
 
 % TO DISCUSS: 
 
 %   1 - Proper way to use Hann Window
+%   R1 - peak of the Hann Window should match the peak of the Signal
+
 %   2 - Fullband T60 can be calculated as a mean of the Subbands T60
+%   R2 - This is fine
+
 %   3 - Proper way to find the late-field onset time
+%   R3 - This is fine (for the moment)
+
 %   4 - Normalization on required functions (some values are too small for the augmented RIR)
+%   R4 - Adding gain to the signal is fine
 
 
 
