@@ -50,8 +50,8 @@ airpar.rir_no = 4;
 targetDRR = 5;
 targetT60 = 0.5;
 
-[augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
-[augmentedLateRIR, augmentedRIR_T60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
+%[augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
+%[augmentedLateRIR, augmentedRIR_T60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
 
 %--------------------------------------------------------------------------
 % Loading speech "male_src_1" + noise "0030"
@@ -62,9 +62,9 @@ noise_sp.name = 'noise-free-sound-0030';
 tfs = 48e3;
 
 speech_sp.data = AudioUtil.loadAudio(speech_sp.name, Constants.SPEECH_LIBRARY_PATH, tfs);
-noise_sp.data = AudioUtil.loadAudio(noise_sp.name, Constants.NOISE_LIBRARY_PATH, tfs);
+noise_sp.data = AudioUtil.loadAudio(noise_sp.name, Constants.BG_NOISE_LIBRARY_PATH, tfs);
 
-SpeechGeneratorService.generateAugmentedSpeech(1,1,1);
+[augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(speech_sp.data, h_air, 1, noise_sp.data);
 
 % plot(h_air);
 % figure();

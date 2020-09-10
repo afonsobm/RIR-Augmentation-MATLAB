@@ -20,6 +20,15 @@ classdef Constants
         HANN_WINDOW_SIZE = 5;
 
         % #################### T60 CONSTANTS ####################
+
+        % #################### SPEECH GEN CONSTANTS ####################
+
+        % [db] Lower bound of the desired SNR
+        LOW_SNR_VALUE = 3;
+
+        % [db] Upper bound of the desired SNR
+        HIGH_SNR_VALUE = 10;
+
         
     end
 end
