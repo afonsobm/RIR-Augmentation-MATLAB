@@ -59,12 +59,14 @@ targetT60 = 0.5;
 
 speech_sp.name = 'male_src_1';
 noise_sp.name = 'noise-free-sound-0030';
+pt_noise_sp.name = 'noise-free-sound-0632';
 tfs = 48e3;
 
 speech_sp.data = AudioUtil.loadAudio(speech_sp.name, Constants.SPEECH_LIBRARY_PATH, tfs);
 noise_sp.data = AudioUtil.loadAudio(noise_sp.name, Constants.BG_NOISE_LIBRARY_PATH, tfs);
+pt_noise_sp.data = AudioUtil.loadAudio(pt_noise_sp.name, Constants.POINT_NOISE_LIBRARY_PATH, tfs);
 
-[augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(speech_sp.data, h_air, 1, noise_sp.data);
+[augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(speech_sp.data, h_air, pt_noise_sp.data, noise_sp.data);
 
 % plot(h_air);
 % figure();
