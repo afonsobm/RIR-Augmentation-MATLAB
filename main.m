@@ -49,7 +49,7 @@ airpar.rir_no = 4;
 
 tfs = 48e3;
 
-for i = 1:2
+for i = 1:1
 
     targetDRR = DataUtil.getRandomDRRValue();
     targetT60 = DataUtil.getRandomT60Value();
@@ -75,7 +75,21 @@ for i = 1:2
     [augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(augmentedRIR, voiceData, ptNoiseData, bgNoiseData);
 
     %converting t60 to integer (miliseconds)
-    targetT60 = round(targetT60 * 100);
+    targetT60 = round(targetT60 * 1000);
+
+    figure;
+    subplot(2,2,1);
+    plot(voiceData);
+    title('Original Voice');
+    subplot(2,2,2);
+    plot(rirVoice);
+    title('Far Voice - Original RIR');
+    subplot(2,2,3);
+    plot(augmentedSpeechPure);
+    title('Far Voice - Augmented RIR');
+    subplot(2,2,4);
+    plot(augmentedSpeechNoise);
+    title('Far Voice - Augmented RIR + Noise');
 
     % saving original voice
     DataUtil.saveAudioFile(voiceData, tfs, voiceInfo.name, [], [], [], [], []);
@@ -99,8 +113,6 @@ end
 %   3 - Proper way to find the late-field onset time
 %   R3 - This is fine (for the moment)
 
-%   4 - Normalization on required functions (some values are too small for the augmented RIR)
-%   R4 - Adding gain to the signal is fine
 
 
 
