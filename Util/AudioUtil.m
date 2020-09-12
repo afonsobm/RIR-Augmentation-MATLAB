@@ -7,7 +7,7 @@ classdef AudioUtil
                 cd(libpath);
             end
 
-            filename = [filename,'.wav'];
+            %filename = [filename,'.wav'];
             if ~(exist(filename,'file'))
                 cd(oldFolder);
                 error('AudioUtil.loadAudio: file <%s> does not exist\n',filename);
@@ -28,6 +28,16 @@ classdef AudioUtil
             end
             
             cd(oldFolder);
+        end
+
+        function [audioFile, fileInfo] = loadRandomAudioSample(libpath, fs)
+
+            % Selecting a random file from the library path
+            listFiles = dir(libpath);
+            randNb = randi([3 length(listFiles)],1);
+            fileInfo = listFiles(randNb);
+
+            audioFile = AudioUtil.loadAudio(fileInfo.name, libpath, fs);
         end
     end
 end

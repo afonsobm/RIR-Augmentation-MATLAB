@@ -50,23 +50,33 @@ airpar.rir_no = 4;
 targetDRR = 5;
 targetT60 = 0.5;
 
-%[augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
-%[augmentedLateRIR, augmentedRIR_T60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
+[augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
+[augmentedLateRIR, augmentedRIR_T60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
+
+% Prevent uneven sized arrays between late and early augmentedRIR
+if (length(augmentedEarlyRIR) > length(augmentedLateRIR))
+    augmentedEarlyRIR = augmentedEarlyRIR(1: length(augmentedLateRIR));
+elseif (length(augmentedEarlyRIR) < length(augmentedLateRIR))
+    augmentedLateRIR = augmentedLateRIR(1: length(augmentedEarlyRIR));
+end
+
+augmentedRIR = augmentedEarlyRIR + augmentedLateRIR;
 
 %--------------------------------------------------------------------------
-% Loading speech "male_src_1" + noise "0030"
+% Loading random speech and noise samples
 %--------------------------------------------------------------------------
 
-speech_sp.name = 'male_src_1';
-noise_sp.name = 'noise-free-sound-0030';
-pt_noise_sp.name = 'noise-free-sound-0632';
 tfs = 48e3;
+[voiceData, voiceInfo] = AudioUtil.loadRandomAudioSample(Constants.SPEECH_LIBRARY_PATH, tfs);
+[ptNoiseData, ptNoiseInfo] = AudioUtil.loadRandomAudioSample(Constants.POINT_NOISE_LIBRARY_PATH, tfs);
+[bgNoiseData, bgNoiseInfo] = AudioUtil.loadRandomAudioSample(Constants.BG_NOISE_LIBRARY_PATH, tfs);
 
-speech_sp.data = AudioUtil.loadAudio(speech_sp.name, Constants.SPEECH_LIBRARY_PATH, tfs);
-noise_sp.data = AudioUtil.loadAudio(noise_sp.name, Constants.BG_NOISE_LIBRARY_PATH, tfs);
-pt_noise_sp.data = AudioUtil.loadAudio(pt_noise_sp.name, Constants.POINT_NOISE_LIBRARY_PATH, tfs);
+[augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(augmentedRIR, voiceData, ptNoiseData, bgNoiseData);
 
-[augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(speech_sp.data, h_air, pt_noise_sp.data, noise_sp.data);
+audiowrite(strcat(Constants.RESULTS_PATH, 'r1_original_voice', '.ogg'), voiceData, tfs);
+audiowrite(strcat(Constants.RESULTS_PATH, 'r1_augmented_voice_pure', '.ogg'), augmentedSpeechPure, tfs);
+audiowrite(strcat(Constants.RESULTS_PATH, 'r1_augmented_voice_noise', '.ogg'), augmentedSpeechNoise, tfs);
+
 
 % plot(h_air);
 % figure();

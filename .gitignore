@@ -1,2 +1,5 @@
 # ignoring audio files
 *.wav
+
+# ignoring RESULTS
+RESULTS

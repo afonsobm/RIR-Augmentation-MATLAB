@@ -42,6 +42,12 @@ classdef T60AugmentationService
 
             % Generating augmented RIR
             [augmentedLateRIR, augmentedRIR] = T60AugmentationService.augmentLateIR(raFilteredSignals.time, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime);
+
+            szRIR = size(augmentedRIR);
+            if (szRIR(1) > szRIR(2))
+                augmentedRIR = augmentedRIR.';
+                augmentedLateRIR = augmentedLateRIR.';
+            end
         end
 
         function [augmentedLateRIR, augmentedRIR] = augmentLateIR(rirSubBands, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime)

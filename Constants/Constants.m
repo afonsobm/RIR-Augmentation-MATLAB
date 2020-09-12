@@ -8,6 +8,8 @@ classdef Constants
         BG_NOISE_LIBRARY_PATH = '../DATABASES/NOISE_LIB/BG/';
         SPEECH_LIBRARY_PATH = '../DATABASES/SPEECH_LIB/';
 
+        RESULTS_PATH = 'RESULTS/';
+
         % #################### DRR CONSTANTS ####################
 
         % defines the intensity of the impulse response which will represent when the audio reached the microfone in the recording

@@ -1,6 +1,6 @@
 classdef SpeechGeneratorService
     methods(Static)
-        function [augmentedSpeechNoise, augmentedSpeechPure] = generateAugmentedSpeech(voiceSample, RIR, pointNoiseSample, backgroundNoiseSample)
+        function [augmentedSpeechNoise, augmentedSpeechPure] = generateAugmentedSpeech(RIR, voiceSample, pointNoiseSample, backgroundNoiseSample)
             
             % Convolving pure voice sample with Augmented RIR
             augmentedSpeechNoise = conv(voiceSample, RIR, 'same');
@@ -56,7 +56,7 @@ classdef SpeechGeneratorService
             %%% TODO: !!!!!!!!!!!!!! THIS IS DUMB, BUT IT WORKS, WILL CHANGE LATER !!!!!!!!!!!!!!!!!!
             snrAlpha = 0;
             snrValue = 0;
-            while (abs(targetSNR - snrValue) > 0.01)
+            while (abs(targetSNR - snrValue) > 0.05)
                 snrAlpha = snrAlpha + 1e-5;
                 
                 adjustedNoise = noiseSample * snrAlpha;
