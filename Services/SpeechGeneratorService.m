@@ -56,13 +56,14 @@ classdef SpeechGeneratorService
             %%% TODO: !!!!!!!!!!!!!! THIS IS DUMB, BUT IT WORKS, WILL CHANGE LATER !!!!!!!!!!!!!!!!!!
             snrAlpha = 0;
             snrValue = 0;
-            while (abs(targetSNR - snrValue) > 0.05)
-                snrAlpha = snrAlpha + 1e-5;
+            while (abs(targetSNR - snrValue) > 0.1)
+                snrAlpha = snrAlpha + 1e-4;
                 
                 adjustedNoise = noiseSample * snrAlpha;
                 voiceWithNoise = voiceSample + adjustedNoise;
 
                 snrValue = snr(voiceWithNoise, adjustedNoise);
+                %difSNR = targetSNR - snrValue
             end
             %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         end

@@ -21,14 +21,28 @@ classdef Constants
         % [miliseconds] defines the size of the Hann Window to calculate the DRR Alpha
         HANN_WINDOW_SIZE = 5;
 
+        % [db] Lower bound of the desired DRR
+        LOW_DRR_VALUE = -6;
+
+        % [db] Upper bound of the desired DRR
+        HIGH_DRR_VALUE = 18;
+
         % #################### T60 CONSTANTS ####################
+
+        % [seconds] Lower bound of the desired T60
+        LOW_T60_VALUE = 0.1;
+
+        % [seconds] Upper bound of the desired T60
+        HIGH_T60_VALUE = 1.5;
 
         % #################### SPEECH GEN CONSTANTS ####################
 
         % [db] Lower bound of the desired SNR
+        %LOW_SNR_VALUE = -5;
         LOW_SNR_VALUE = 3;
 
         % [db] Upper bound of the desired SNR
+        %HIGH_SNR_VALUE = 20;
         HIGH_SNR_VALUE = 10;
 
         

@@ -47,40 +47,46 @@ airpar.head = 1;
 airpar.rir_no = 4;
 [h_air,air_info] = LoadAIR.loadAIR(airpar, Constants.AIR_LIBRARY_PATH);
 
-targetDRR = 5;
-targetT60 = 0.5;
+tfs = 48e3;
 
-[augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
-[augmentedLateRIR, augmentedRIR_T60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
+for i = 1:2
 
-% Prevent uneven sized arrays between late and early augmentedRIR
-if (length(augmentedEarlyRIR) > length(augmentedLateRIR))
-    augmentedEarlyRIR = augmentedEarlyRIR(1: length(augmentedLateRIR));
-elseif (length(augmentedEarlyRIR) < length(augmentedLateRIR))
-    augmentedLateRIR = augmentedLateRIR(1: length(augmentedEarlyRIR));
+    targetDRR = DataUtil.getRandomDRRValue();
+    targetT60 = DataUtil.getRandomT60Value();
+
+    [augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
+    [augmentedLateRIR, augmentedRIR_T60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
+
+    % Prevent uneven sized arrays between late and early augmentedRIR
+    if (length(augmentedEarlyRIR) > length(augmentedLateRIR))
+        augmentedEarlyRIR = augmentedEarlyRIR(1: length(augmentedLateRIR));
+    elseif (length(augmentedEarlyRIR) < length(augmentedLateRIR))
+        augmentedLateRIR = augmentedLateRIR(1: length(augmentedEarlyRIR));
+    end
+
+    augmentedRIR = augmentedEarlyRIR + augmentedLateRIR;
+
+    [voiceData, voiceInfo] = AudioUtil.loadRandomAudioSample(Constants.SPEECH_LIBRARY_PATH, tfs);
+    [ptNoiseData, ptNoiseInfo] = AudioUtil.loadRandomAudioSample(Constants.POINT_NOISE_LIBRARY_PATH, tfs);
+    [bgNoiseData, bgNoiseInfo] = AudioUtil.loadRandomAudioSample(Constants.BG_NOISE_LIBRARY_PATH, tfs);
+
+    rirVoice = conv(voiceData, h_air, 'same');
+
+    [augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(augmentedRIR, voiceData, ptNoiseData, bgNoiseData);
+
+    %converting t60 to integer (miliseconds)
+    targetT60 = round(targetT60 * 100);
+
+    % saving original voice
+    DataUtil.saveAudioFile(voiceData, tfs, voiceInfo.name, [], [], [], [], []);
+    % saving voice with original RIR
+    DataUtil.saveAudioFile(rirVoice, tfs, voiceInfo.name, 'lecture', [], [], [], []);
+    % saving voice with augmented RIR
+    DataUtil.saveAudioFile(augmentedSpeechPure, tfs, voiceInfo.name, 'lecture', [], [], targetDRR, targetT60);
+    % saving voice with augmented RIR and Noise
+    DataUtil.saveAudioFile(augmentedSpeechNoise, tfs, voiceInfo.name, 'lecture', ptNoiseInfo.name, bgNoiseInfo.name, targetDRR, targetT60);
 end
 
-augmentedRIR = augmentedEarlyRIR + augmentedLateRIR;
-
-%--------------------------------------------------------------------------
-% Loading random speech and noise samples
-%--------------------------------------------------------------------------
-
-tfs = 48e3;
-[voiceData, voiceInfo] = AudioUtil.loadRandomAudioSample(Constants.SPEECH_LIBRARY_PATH, tfs);
-[ptNoiseData, ptNoiseInfo] = AudioUtil.loadRandomAudioSample(Constants.POINT_NOISE_LIBRARY_PATH, tfs);
-[bgNoiseData, bgNoiseInfo] = AudioUtil.loadRandomAudioSample(Constants.BG_NOISE_LIBRARY_PATH, tfs);
-
-[augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(augmentedRIR, voiceData, ptNoiseData, bgNoiseData);
-
-audiowrite(strcat(Constants.RESULTS_PATH, 'r1_original_voice', '.ogg'), voiceData, tfs);
-audiowrite(strcat(Constants.RESULTS_PATH, 'r1_augmented_voice_pure', '.ogg'), augmentedSpeechPure, tfs);
-audiowrite(strcat(Constants.RESULTS_PATH, 'r1_augmented_voice_noise', '.ogg'), augmentedSpeechNoise, tfs);
-
-
-% plot(h_air);
-% figure();
-% plot(augmentedRIR_T60);
 
 % TO DISCUSS: 
 
