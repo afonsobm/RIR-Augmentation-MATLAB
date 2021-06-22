@@ -6,8 +6,12 @@ classdef DRRAugmentationService
             earlyIR = IRUtil.earlyResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);
             lateIR = IRUtil.lateResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);
 
+            drrOg = DRRAugmentationService.calculateDRR(earlyIR,lateIR);
+
             % Calculating Alpha Scalar to DRR
             drrAlpha = DRRAugmentationService.calculateAlpha(targetDRR, air_info.fs, earlyIR, lateIR);
+
+            drrNew = DRRAugmentationService.calculateDRR(earlyIR * drrAlpha,lateIR);
 
             % Generating Augmented RIR
             augmentedEarlyRIR = earlyIR * drrAlpha;
@@ -37,7 +41,7 @@ classdef DRRAugmentationService
             coef = ones(1,3);
             coef(1) = sum((hannWindow.^2) .* (earlyIR_NP).^2);
             coef(2) = 2 * sum((1 - hannWindow) .* hannWindow .* (earlyIR_NP.^2));
-            coef(3) = sum(((1 - hannWindow).^2) .* (earlyIR_NP.^2)) - (sum(lateIR) * (10^(drr/10)));
+            coef(3) = sum(((1 - hannWindow).^2) .* (earlyIR_NP.^2)) - (sum(lateIR.^2) * (10^(drr/10)));
             
             rt = roots(coef);
             drrAlpha = max(rt);

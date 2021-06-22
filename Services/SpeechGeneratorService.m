@@ -3,7 +3,8 @@ classdef SpeechGeneratorService
         function [augmentedSpeechNoise, augmentedSpeechPure] = generateAugmentedSpeech(RIR, voiceSample, pointNoiseSample, backgroundNoiseSample)
             
             % Convolving pure voice sample with Augmented RIR
-            augmentedSpeechNoise = conv(voiceSample, RIR, 'same');
+            %augmentedSpeechNoise = conv(voiceSample, RIR, 'same');
+            augmentedSpeechNoise = conv(voiceSample, RIR, 'full');
             augmentedSpeechPure = augmentedSpeechNoise;
 
             if (~isempty(pointNoiseSample))
@@ -18,7 +19,8 @@ classdef SpeechGeneratorService
         function speechWithNoise = pointNoiseAdd(voiceSample, RIR, pointNoiseSample)
             
             % Convolving point noise sample with Augmented RIR
-            convNoiseSample = conv(pointNoiseSample, RIR, 'same');
+            %convNoiseSample = conv(pointNoiseSample, RIR, 'same');
+            convNoiseSample = conv(pointNoiseSample, RIR, 'full');
 
             % Offset the noise to a random part of the voice sample
             initPos = randi([1 (length(voiceSample) - length(convNoiseSample))],1);
@@ -52,18 +54,20 @@ classdef SpeechGeneratorService
 
             % Randomly Select a SNR value within the desired range
             targetSNR = randi([Constants.LOW_SNR_VALUE, Constants.HIGH_SNR_VALUE],1);
+            disp('Calculating SNR Alpha');
 
             %%% TODO: !!!!!!!!!!!!!! THIS IS DUMB, BUT IT WORKS, WILL CHANGE LATER !!!!!!!!!!!!!!!!!!
             snrAlpha = 0;
             snrValue = 0;
             while (abs(targetSNR - snrValue) > 0.1)
-                snrAlpha = snrAlpha + 1e-4;
+                snrAlpha = snrAlpha + 1e-3;
                 
                 adjustedNoise = noiseSample * snrAlpha;
                 voiceWithNoise = voiceSample + adjustedNoise;
 
                 snrValue = snr(voiceWithNoise, adjustedNoise);
-                %difSNR = targetSNR - snrValue
+                difSNR = targetSNR - snrValue;
+                disp(difSNR);
             end
             %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         end

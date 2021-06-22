@@ -23,7 +23,7 @@ classdef DataUtil
         end
 
         function randomDRR = getRandomDRRValue()
-            randomDRR = randi([Constants.LOW_DRR_VALUE, Constants.HIGH_SNR_VALUE],1);
+            randomDRR = randi([Constants.LOW_DRR_VALUE, Constants.HIGH_DRR_VALUE],1);
         end
 
         function randomT60 = getRandomT60Value()

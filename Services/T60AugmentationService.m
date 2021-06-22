@@ -43,6 +43,31 @@ classdef T60AugmentationService
             % Generating augmented RIR
             [augmentedLateRIR, augmentedRIR] = T60AugmentationService.augmentLateIR(raFilteredSignals.time, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime);
 
+            % ###################################################################################################################################
+            szRIR = size(augmentedRIR);
+            if szRIR(1) == 1 
+                augmentedRIR = augmentedRIR.';
+            end
+
+            % Loading the RIR into the itaAudio format
+            itaRIR = itaAudio(augmentedRIR, air_info.fs, 'time');
+
+            % Estimating T20 parameter for the default subbands using the "ita_roomacoustics" function (following ISO 3382-1)
+            % (Since it is not always possible to properly estimate T60, we are estimating T20)
+            [raParams, raFilteredSignals] = ita_roomacoustics( itaRIR, ...
+                'T20', ...
+                'freqRange', [20 20000], 'bandsPerOctave', 1, 'edcMethod', 'subtractNoise');
+
+            % Calculating T60 for each subband
+            t60SubBands2 = raParams.T20.freqData;
+            t60SubBands2(isnan(t60SubBands2)) = 0;
+            t60SubBands2 = t60SubBands2 * 3;
+
+            % Calculating fullband T60
+            % TODO: Verify if the fullband T60 can be simplified as a mean of the subband ones
+            t60FullBand2 = mean(t60SubBands2);
+            % ###################################################################################################################################
+            
             szRIR = size(augmentedRIR);
             if (szRIR(1) > szRIR(2))
                 augmentedRIR = augmentedRIR.';
