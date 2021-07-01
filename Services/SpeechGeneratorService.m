@@ -1,22 +1,25 @@
 classdef SpeechGeneratorService
     methods(Static)
-        function [augmentedSpeechNoise, augmentedSpeechPure] = generateAugmentedSpeech(RIR, voiceSample, pointNoiseSample, backgroundNoiseSample)
+        function [augmentedSpeechNoise, augmentedSpeechPure, targetSNR] = generateAugmentedSpeech(RIR, voiceSample, pointNoiseSample, backgroundNoiseSample)
             
             % Convolving pure voice sample with Augmented RIR
             %augmentedSpeechNoise = conv(voiceSample, RIR, 'same');
             augmentedSpeechNoise = conv(voiceSample, RIR, 'full');
             augmentedSpeechPure = augmentedSpeechNoise;
 
+            % Randomly Select a SNR value within the desired range
+            targetSNR = randi([Constants.LOW_SNR_VALUE, Constants.HIGH_SNR_VALUE],1);
+
             if (~isempty(pointNoiseSample))
-                augmentedSpeechNoise = SpeechGeneratorService.pointNoiseAdd(augmentedSpeechNoise, RIR, pointNoiseSample);
+                augmentedSpeechNoise = SpeechGeneratorService.pointNoiseAdd(augmentedSpeechNoise, RIR, pointNoiseSample, targetSNR);
             end
 
             if (~isempty(backgroundNoiseSample))
-                augmentedSpeechNoise = SpeechGeneratorService.backgroundNoiseAdd(augmentedSpeechNoise, backgroundNoiseSample);
+                augmentedSpeechNoise = SpeechGeneratorService.backgroundNoiseAdd(augmentedSpeechNoise, backgroundNoiseSample, targetSNR);
             end
         end
 
-        function speechWithNoise = pointNoiseAdd(voiceSample, RIR, pointNoiseSample)
+        function speechWithNoise = pointNoiseAdd(voiceSample, RIR, pointNoiseSample, targetSNR)
             
             % Convolving point noise sample with Augmented RIR
             %convNoiseSample = conv(pointNoiseSample, RIR, 'same');
@@ -29,12 +32,12 @@ classdef SpeechGeneratorService
             zpPointNoiseSample(initPos:endPos) = zpPointNoiseSample(initPos:endPos) + convNoiseSample;
 
             % Calculates SNR Alpha Scaling Coefficient
-            snrAlpha = SpeechGeneratorService.calculateSNRAlpha(voiceSample, zpPointNoiseSample);
+            snrAlpha = SpeechGeneratorService.calculateSNRAlpha(voiceSample, zpPointNoiseSample, targetSNR);
 
             speechWithNoise = voiceSample + (zpPointNoiseSample * snrAlpha);
         end
 
-        function speechWithNoise = backgroundNoiseAdd(voiceSample, backgroundNoiseSample)
+        function speechWithNoise = backgroundNoiseAdd(voiceSample, backgroundNoiseSample, targetSNR)
             
             % Matching the sizes of the Voice Sample with the Background Noise
             if (length(backgroundNoiseSample) > length(voiceSample))
@@ -45,15 +48,15 @@ classdef SpeechGeneratorService
             end
 
             % Calculates SNR Alpha Scaling Coefficient
-            snrAlpha = SpeechGeneratorService.calculateSNRAlpha(voiceSample, backgroundNoiseSample);
+            snrAlpha = SpeechGeneratorService.calculateSNRAlpha(voiceSample, backgroundNoiseSample, targetSNR);
             
             speechWithNoise = voiceSample + (backgroundNoiseSample * snrAlpha);
         end
 
-        function snrAlpha = calculateSNRAlpha(voiceSample, noiseSample)
+        function snrAlpha = calculateSNRAlpha(voiceSample, noiseSample, targetSNR)
 
             % Randomly Select a SNR value within the desired range
-            targetSNR = randi([Constants.LOW_SNR_VALUE, Constants.HIGH_SNR_VALUE],1);
+            %targetSNR = randi([Constants.LOW_SNR_VALUE, Constants.HIGH_SNR_VALUE],1);
             disp('Calculating SNR Alpha');
 
             %%% TODO: !!!!!!!!!!!!!! THIS IS DUMB, BUT IT WORKS, WILL CHANGE LATER !!!!!!!!!!!!!!!!!!

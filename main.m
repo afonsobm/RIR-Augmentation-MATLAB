@@ -39,7 +39,7 @@ end
 % Distance: 4m
 % With dummy head
 % left channel
-airpar.fs = 48e3;
+airpar.fs = 16e3;
 airpar.rir_type = 1;
 airpar.room = 4;
 airpar.channel = 1;
@@ -47,15 +47,15 @@ airpar.head = 1;
 airpar.rir_no = 4;
 [h_air,air_info] = LoadAIR.loadAIR(airpar, Constants.AIR_LIBRARY_PATH);
 
-tfs = 48e3;
+tfs = 16e3;
 
 for i = 1:1
 
     targetDRR = DataUtil.getRandomDRRValue();
     targetT60 = DataUtil.getRandomT60Value();
 
-    [augmentedEarlyRIR, augmentedRIR_DRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
-    [augmentedLateRIR, augmentedRIR_T60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
+    [augmentedEarlyRIR, augmentedRIR_DRR, resultDRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
+    [augmentedLateRIR, augmentedRIR_T60, resultT60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
 
     % Prevent uneven sized arrays between late and early augmentedRIR
     if (length(augmentedEarlyRIR) > length(augmentedLateRIR))
@@ -72,7 +72,7 @@ for i = 1:1
 
     rirVoice = conv(voiceData, h_air, 'full');
 
-    [augmentedSpeechNoise, augmentedSpeechPure] = SpeechGeneratorService.generateAugmentedSpeech(augmentedRIR, voiceData, ptNoiseData, bgNoiseData);
+    [augmentedSpeechNoise, augmentedSpeechPure, resultSNR] = SpeechGeneratorService.generateAugmentedSpeech(augmentedRIR, voiceData, ptNoiseData, bgNoiseData);
 
     %converting t60 to integer (miliseconds)
     targetT60 = round(targetT60 * 1000);

@@ -4,7 +4,7 @@ classdef T60AugmentationService
         % ### !!! NOTICE !!! ###
         % The "ITA-Toolbox" is required to execute the following methods
         % Visit this website for more information: "http://www.ita-toolbox.org/"
-        function [augmentedLateRIR, augmentedRIR] = generateAugmentedRIR(h_air, air_info, targetT60)
+        function [augmentedLateRIR, augmentedRIR, t60FullBandTarget] = generateAugmentedRIR(h_air, air_info, targetT60)
             
             % Transpose RIR if lines == 1
             szRIR = size(h_air);
@@ -15,24 +15,17 @@ classdef T60AugmentationService
             % Loading the RIR into the itaAudio format
             itaRIR = itaAudio(h_air, air_info.fs, 'time');
 
-            % Estimating T20 parameter for the default subbands using the "ita_roomacoustics" function (following ISO 3382-1)
-            % (Since it is not always possible to properly estimate T60, we are estimating T20)
+            % Estimating T60 parameter for the default subbands using the "ita_roomacoustics" function (following ISO 3382-1)
             [raParams, raFilteredSignals] = ita_roomacoustics( itaRIR, ...
-                'T20', ...
-                'freqRange', [20 20000], 'bandsPerOctave', 1, 'edcMethod', 'subtractNoise');
-
-            % Calculating T60 for each subband
-            t60SubBands = raParams.T20.freqData;
-            t60SubBands(isnan(t60SubBands)) = 0;
-            t60SubBands = t60SubBands * 3;
+                 'T20','T60', 'EDC', ...
+                 'broadbandAnalysis', true, 'edcMethod', 'noCut');
 
             % Calculating fullband T60
-            % TODO: Verify if the fullband T60 can be simplified as a mean of the subband ones
-            t60FullBand = mean(t60SubBands);
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            t60FullBand = raParams.T60.freqData;
 
             % Calculating required decay rates
-            [decayRateSubBands, targetDecayRateSubBands] = T60AugmentationService.calculateDecayRates(t60FullBand, t60SubBands, targetT60, air_info.fs);
+            decayRateOriginal = T60AugmentationService.convertT60ToDecayRate(t60FullBand, air_info.fs);
+            decayRateTarget = T60AugmentationService.convertT60ToDecayRate(targetT60, air_info.fs);
 
             % Retrieving late-field onset time
             % TODO: Verify if this way to get this parameter is acceptable
@@ -41,32 +34,23 @@ classdef T60AugmentationService
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % Generating augmented RIR
-            [augmentedLateRIR, augmentedRIR] = T60AugmentationService.augmentLateIR(raFilteredSignals.time, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime);
+            [augmentedLateRIR, augmentedRIR] = T60AugmentationService.augmentLateIR(h_air, ...
+            decayRateOriginal, ...
+            decayRateTarget, ...
+            lateOnsetTime, air_info.fs);
 
-            % ###################################################################################################################################
             szRIR = size(augmentedRIR);
             if szRIR(1) == 1 
                 augmentedRIR = augmentedRIR.';
             end
 
-            % Loading the RIR into the itaAudio format
+            % Checking the result T60
             itaRIR = itaAudio(augmentedRIR, air_info.fs, 'time');
-
-            % Estimating T20 parameter for the default subbands using the "ita_roomacoustics" function (following ISO 3382-1)
-            % (Since it is not always possible to properly estimate T60, we are estimating T20)
             [raParams, raFilteredSignals] = ita_roomacoustics( itaRIR, ...
-                'T20', ...
-                'freqRange', [20 20000], 'bandsPerOctave', 1, 'edcMethod', 'subtractNoise');
+                 'T20','T60', 'EDC', ...
+                 'broadbandAnalysis', true, 'edcMethod', 'noCut');
 
-            % Calculating T60 for each subband
-            t60SubBands2 = raParams.T20.freqData;
-            t60SubBands2(isnan(t60SubBands2)) = 0;
-            t60SubBands2 = t60SubBands2 * 3;
-
-            % Calculating fullband T60
-            % TODO: Verify if the fullband T60 can be simplified as a mean of the subband ones
-            t60FullBand2 = mean(t60SubBands2);
-            % ###################################################################################################################################
+            t60FullBandTarget = raParams.T60.freqData;
             
             szRIR = size(augmentedRIR);
             if (szRIR(1) > szRIR(2))
@@ -75,27 +59,24 @@ classdef T60AugmentationService
             end
         end
 
-        function [augmentedLateRIR, augmentedRIR] = augmentLateIR(rirSubBands, decayRateSubBands, targetDecayRateSubBands, lateOnsetTime)
+        function [augmentedLateRIRFB, augmentedRIRFB] = augmentLateIR(rirFB, decayRateFB, targetDecayRateFB, lateOnsetTime, fs)
 
-            szRIR = size(rirSubBands);
+            szRIR = size(rirFB);
             if (szRIR(2) > szRIR(1))
-                rirSubBands = rirSubBands.';
+                rirFB = rirFB.';
             end
 
-            augmentedRIR = zeros(size(rirSubBands(:,1)));
+            augmentedRIRFB = rirFB;
+            lateRIRFB = augmentedRIRFB(lateOnsetTime:end);
 
-            for i = 1:1:length(decayRateSubBands)
-                if (decayRateSubBands(i) ~= 0)
+            t = (1:1:length(lateRIRFB(:,1))).';
+            expAug = exp(((-t + lateOnsetTime)) * ((decayRateFB - targetDecayRateFB)/(decayRateFB * targetDecayRateFB)));
+            augmentedLateRIRFB = (lateRIRFB(:,1) .* expAug);
 
-                    t = (1:1:length(rirSubBands(:,i))).';
-                    expAug = exp((-t + lateOnsetTime) * ((decayRateSubBands(i) - targetDecayRateSubBands(i))/(decayRateSubBands(i) * targetDecayRateSubBands(i))));
-                    augmentedRIR = augmentedRIR + (rirSubBands(:,i) .* expAug);
-                end
-            end
-
-            augmentedLateRIR = augmentedRIR;
-            augmentedLateRIR(1:lateOnsetTime) = 0;
-        end
+            %augmentedLateRIRFB = augmentedRIRFB;
+            %augmentedLateRIRFB(1:lateOnsetTime) = 0;
+            augmentedRIRFB(lateOnsetTime:end) = augmentedLateRIRFB;
+        end       
 
         function [decayRateSubBands, targetDecayRateSubBands] = calculateDecayRates(t60FullBand, t60SubBands, targetT60, fs)
 

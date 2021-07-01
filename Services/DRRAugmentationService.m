@@ -1,6 +1,6 @@
 classdef DRRAugmentationService
     methods(Static)
-        function [augmentedEarlyRIR, augmentedRIR] = generateAugmentedRIR(h_air, air_info, targetDRR)
+        function [augmentedEarlyRIR, augmentedRIR, drrNew] = generateAugmentedRIR(h_air, air_info, targetDRR)
 
             % Retrieving early/late responses
             earlyIR = IRUtil.earlyResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);
@@ -9,32 +9,37 @@ classdef DRRAugmentationService
             drrOg = DRRAugmentationService.calculateDRR(earlyIR,lateIR);
 
             % Calculating Alpha Scalar to DRR
-            drrAlpha = DRRAugmentationService.calculateAlpha(targetDRR, air_info.fs, earlyIR, lateIR);
+            [earlyIR_N,drrAlpha] = DRRAugmentationService.calculateAlpha(targetDRR, air_info.fs, earlyIR, lateIR);
 
-            drrNew = DRRAugmentationService.calculateDRR(earlyIR * drrAlpha,lateIR);
+            %drrNew = DRRAugmentationService.calculateDRR(earlyIR * drrAlpha,lateIR);
+            drrNew = DRRAugmentationService.calculateDRR(earlyIR_N,lateIR);
 
-            % Generating Augmented RIR
-            augmentedEarlyRIR = earlyIR * drrAlpha;
-            h_air(abs(augmentedEarlyRIR) > 0) = h_air(abs(augmentedEarlyRIR) > 0) * drrAlpha;
-            augmentedRIR = h_air;
+           % Generating Augmented RIR
+           augmentedEarlyRIR = earlyIR_N;
+           %h_air(abs(augmentedEarlyRIR) > 0) = h_air(abs(augmentedEarlyRIR) > 0) * drrAlpha;
+           augmentedRIR = earlyIR_N+lateIR;
         end
 
-        function drrAlpha = calculateAlpha(drr, fs, earlyIR, lateIR)
+        function [earlyIR_N,drrAlpha] = calculateAlpha(drr, fs, earlyIR, lateIR)
             
             % Generating Hann Windows and removing zeroes on earlyIR
             hannWindow = hann(ceil((fs * Constants.HANN_WINDOW_SIZE)/1000));
             hannWindow = transpose(hannWindow);
-
-            %%% TODO: Verify if earlyIR_NP is correct to properly multiply hannWindow
-            earlyIR_NP = earlyIR(abs(earlyIR) > 0);
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-            % Prevent uneven sized arrays between hannWindow and earlyIR
-            if (length(earlyIR_NP) > length(hannWindow))
-                earlyIR_NP = earlyIR_NP(1:length(hannWindow));
-            elseif (length(earlyIR_NP) < length(hannWindow))
-                pads = zeros(1,length(hannWindow) - length(earlyIR_NP));
-                earlyIR_NP = [earlyIR_NP pads];
+            
+            [aux,ind]=max(abs(earlyIR));
+            
+            Nw=length(hannWindow);
+            earlyIR_NP = earlyIR;
+            
+            if Nw<2*ind
+                pads = zeros(1,ceil(ind-Nw/2));
+                hannWindow = [pads hannWindow];
+            end
+            
+            Nw=length(hannWindow);
+            if (length(earlyIR_NP) > Nw)
+                pads = zeros(1,length(earlyIR_NP)-Nw);
+                hannWindow = [hannWindow pads];
             end
 
             % Calculating the maximum root of the quadratic equation to retrieve alpha
@@ -45,6 +50,8 @@ classdef DRRAugmentationService
             
             rt = roots(coef);
             drrAlpha = max(rt);
+            
+            earlyIR_N=drrAlpha*(earlyIR_NP.*hannWindow)+earlyIR_NP.*(1-hannWindow);
         end
 
         function drr = calculateDRR(earlyIR, lateIR)
