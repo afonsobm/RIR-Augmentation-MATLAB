@@ -32,20 +32,8 @@ if(~isdeployed)
     addpath(genpath(folder));
 end
 
-%--------------------------------------------------------------------------
-% Example 1
-%--------------------------------------------------------------------------
-% Binaural RIR of lecture room
-% Distance: 4m
-% With dummy head
-% left channel
-airpar.fs = 16e3;
-airpar.rir_type = 1;
-airpar.room = 4;
-airpar.channel = 1;
-airpar.head = 1;
-airpar.rir_no = 4;
-[h_air,air_info] = LoadAIR.loadAIR(airpar, Constants.AIR_LIBRARY_PATH);
+[h_air,air_info] = DataUtil.loadRIR(5);
+%h_air = h_air * 100;
 
 tfs = 16e3;
 
@@ -54,8 +42,14 @@ for i = 1:1
     targetDRR = DataUtil.getRandomDRRValue();
     targetT60 = DataUtil.getRandomT60Value();
 
-    [augmentedEarlyRIR, augmentedRIR_DRR, resultDRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
-    [augmentedLateRIR, augmentedRIR_T60, resultT60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
+    resultDRR = targetDRR;
+    resultT60 = targetT60;
+
+    [augmentedEarlyRIR, augmentedRIR_DRR, origDRR, resultDRR] = DRRAugmentationService.generateAugmentedRIR(h_air, air_info, targetDRR);
+    [augmentedLateRIR, augmentedRIR_T60, origT60, resultT60] = T60AugmentationService.generateAugmentedRIR(h_air, air_info, targetT60);
+
+    augmentedEarlyRIR = IRUtil.earlyResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);
+    %augmentedLateRIR = IRUtil.lateResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);
 
     % Prevent uneven sized arrays between late and early augmentedRIR
     if (length(augmentedEarlyRIR) > length(augmentedLateRIR))
@@ -71,34 +65,80 @@ for i = 1:1
     [bgNoiseData, bgNoiseInfo] = AudioUtil.loadRandomAudioSample(Constants.BG_NOISE_LIBRARY_PATH, tfs);
 
     rirVoice = conv(voiceData, h_air, 'full');
-
+    %augmentedSpeechPure = conv(voiceData, augmentedRIR, 'full');
     [augmentedSpeechNoise, augmentedSpeechPure, resultSNR] = SpeechGeneratorService.generateAugmentedSpeech(augmentedRIR, voiceData, ptNoiseData, bgNoiseData);
 
     %converting t60 to integer (miliseconds)
-    targetT60 = round(targetT60 * 1000);
+    resultT60 = round(resultT60 * 1000);
 
+    % RIR original
     figure;
-    subplot(2,2,1);
+    plot(h_air);
+    title('RIR original');
+    xlabel('Tempo (discreto)');
+    ylabel('Intensidade');
+    legend('h(t)');
+
+    % RIR augmentada
+    figure;
+    plot(augmentedRIR);
+    title('RIR modificada');
+    xlabel('Tempo (discreto)');
+    ylabel('Intensidade');
+    legend('ha(t)');
+
+    % amostra de voz original
+    figure;
     plot(voiceData);
-    title('Original Voice');
-    subplot(2,2,2);
-    plot(rirVoice);
-    title('Far Voice - Original RIR');
-    subplot(2,2,3);
+    title('Amostra de voz original');
+    xlabel('Tempo (discreto)');
+    ylabel('Intensidade');
+    legend('s(t)');
+
+    % amostra de voz augmentada
+    figure;
     plot(augmentedSpeechPure);
-    title('Far Voice - Augmented RIR');
-    subplot(2,2,4);
+    title('Amostra de voz reverberada');
+    xlabel('Tempo (discreto)');
+    ylabel('Intensidade');
+    legend('sa(t)');
+
+    % amostra de voz com ruido
+    figure;
     plot(augmentedSpeechNoise);
-    title('Far Voice - Augmented RIR + Noise');
+    title('Amostra de voz com ruído');
+    xlabel('Tempo (discreto)');
+    ylabel('Intensidade');
+    legend('sn(t)');
+
+    % figure;
+    % subplot(2,2,2);
+    % plot(voiceData);
+    % title('Original Voice');
+    % subplot(2,2,2);
+    % plot(rirVoice);
+    % title('Far Voice - Original RIR');
+    % subplot(2,2,3);
+    % plot(augmentedSpeechPure);
+    % title('Far Voice - Augmented RIR');
+    % subplot(2,2,4);
+    % plot(augmentedSpeechNoise);
+    % title('Far Voice - Augmented RIR + Noise');
+
+    % saving original RIR
+    %(rirData, fs, isAug, roomName, distance, drrValue, t60Value)
+    DataUtil.saveRIRData(h_air, tfs, false, air_info.room, air_info.distance, origDRR, origT60);
+    % saving augmented RIR
+    DataUtil.saveRIRData(augmentedRIR, tfs, true, air_info.room, air_info.distance, resultDRR, resultT60);
 
     % saving original voice
-    DataUtil.saveAudioFile(voiceData, tfs, voiceInfo.name, [], [], [], [], []);
+    DataUtil.saveAudioFile(voiceData, tfs, voiceInfo.name, [], [], [], [], [], [], []);
     % saving voice with original RIR
-    DataUtil.saveAudioFile(rirVoice, tfs, voiceInfo.name, 'lecture', [], [], [], []);
+    DataUtil.saveAudioFile(rirVoice, tfs, voiceInfo.name, air_info.room, air_info.distance, [], [], [], [], []);
     % saving voice with augmented RIR
-    DataUtil.saveAudioFile(augmentedSpeechPure, tfs, voiceInfo.name, 'lecture', [], [], targetDRR, targetT60);
+    DataUtil.saveAudioFile(augmentedSpeechPure, tfs, voiceInfo.name, air_info.room, air_info.distance, [], [], resultDRR, resultT60, []);
     % saving voice with augmented RIR and Noise
-    DataUtil.saveAudioFile(augmentedSpeechNoise, tfs, voiceInfo.name, 'lecture', ptNoiseInfo.name, bgNoiseInfo.name, targetDRR, targetT60);
+    DataUtil.saveAudioFile(augmentedSpeechNoise, tfs, voiceInfo.name, air_info.room, air_info.distance, ptNoiseInfo.name, bgNoiseInfo.name, resultDRR, resultT60, resultSNR);
 end
 
 

@@ -1,6 +1,6 @@
 classdef DRRAugmentationService
     methods(Static)
-        function [augmentedEarlyRIR, augmentedRIR, drrNew] = generateAugmentedRIR(h_air, air_info, targetDRR)
+        function [augmentedEarlyRIR, augmentedRIR, drrOg, drrNew] = generateAugmentedRIR(h_air, air_info, targetDRR)
 
             % Retrieving early/late responses
             earlyIR = IRUtil.earlyResponseRIR(h_air, air_info.fs, Constants.DELAY_THRESHOLD, Constants.TOLERANCE_WINDOW);

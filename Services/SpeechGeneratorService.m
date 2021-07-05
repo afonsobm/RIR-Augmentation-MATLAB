@@ -63,7 +63,7 @@ classdef SpeechGeneratorService
             snrAlpha = 0;
             snrValue = 0;
             while (abs(targetSNR - snrValue) > 0.1)
-                snrAlpha = snrAlpha + 1e-3;
+                snrAlpha = snrAlpha + 1e-4;
                 
                 adjustedNoise = noiseSample * snrAlpha;
                 voiceWithNoise = voiceSample + adjustedNoise;

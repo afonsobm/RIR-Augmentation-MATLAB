@@ -4,7 +4,7 @@ classdef T60AugmentationService
         % ### !!! NOTICE !!! ###
         % The "ITA-Toolbox" is required to execute the following methods
         % Visit this website for more information: "http://www.ita-toolbox.org/"
-        function [augmentedLateRIR, augmentedRIR, t60FullBandTarget] = generateAugmentedRIR(h_air, air_info, targetT60)
+        function [augmentedLateRIR, augmentedRIR, t60FullBand, t60FullBandTarget] = generateAugmentedRIR(h_air, air_info, targetT60)
             
             % Transpose RIR if lines == 1
             szRIR = size(h_air);

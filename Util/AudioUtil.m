@@ -33,8 +33,9 @@ classdef AudioUtil
         function [audioFile, fileInfo] = loadRandomAudioSample(libpath, fs)
 
             % Selecting a random file from the library path
-            listFiles = dir(libpath);
-            randNb = randi([3 length(listFiles)],1);
+            libFiles = strcat(libpath, '*.wav');
+            listFiles = dir(libFiles);
+            randNb = randi([1 length(listFiles)],1);
             fileInfo = listFiles(randNb);
 
             audioFile = AudioUtil.loadAudio(fileInfo.name, libpath, fs);

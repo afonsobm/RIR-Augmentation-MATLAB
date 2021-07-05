@@ -6,7 +6,7 @@ classdef Constants
         AIR_LIBRARY_PATH = '../DATABASES/AIR_LIB/';
         POINT_NOISE_LIBRARY_PATH = '../DATABASES/NOISE_LIB/PT/';
         BG_NOISE_LIBRARY_PATH = '../DATABASES/NOISE_LIB/BG/';
-        SPEECH_LIBRARY_PATH = '../DATABASES/SPEECH_LIB/normal/';
+        SPEECH_LIBRARY_PATH = '../DATABASES/SPEECH_LIB/amp/';
 
         RESULTS_PATH = 'RESULTS/';
 
@@ -32,11 +32,11 @@ classdef Constants
         % #################### T60 CONSTANTS ####################
 
         % [seconds] Lower bound of the desired T60
-        LOW_T60_VALUE = 1;
+        LOW_T60_VALUE = 2.8;
 
         % [seconds] Upper bound of the desired T60
         %HIGH_T60_VALUE = 1.5;
-        HIGH_T60_VALUE = 3;
+        HIGH_T60_VALUE = 3.8;
 
         % #################### SPEECH GEN CONSTANTS ####################
 
@@ -46,7 +46,7 @@ classdef Constants
 
         % [db] Upper bound of the desired SNR
         %HIGH_SNR_VALUE = 20;
-        HIGH_SNR_VALUE = 30;
+        HIGH_SNR_VALUE = 5;
 
         
     end
